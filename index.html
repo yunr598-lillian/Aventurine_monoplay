@@ -622,16 +622,29 @@
     roll(gameState.turn === 0 ? 'user' : 'char');
   }
 
+  // --- 修复后的 roll 函数 ---
   function roll(who) {
     gameState.isMoving = true;
     const dice = document.getElementById('dice-btn');
     let rollTimes = 0;
+    
+    // 动画效果
     const rollInterval = setInterval(() => {
+      // 这里的随机数只是为了视觉上的跳动，不影响结果
       const r = Math.floor(Math.random() * 6) + 1;
       dice.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][r-1];
+      
       if (++rollTimes > 10) {
         clearInterval(rollInterval);
-        moveTokenStep(who, Math.floor(Math.random() * 6) + 1);
+        
+        // 1. 生成最终的确定点数
+        const finalPoint = Math.floor(Math.random() * 6) + 1;
+        
+        // 2. 将骰子显示固定为这个点数
+        dice.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][finalPoint-1];
+        
+        // 3. 将同一个点数传给移动逻辑
+        moveTokenStep(who, finalPoint);
       }
     }, 50);
   }
@@ -735,4 +748,3 @@
 </script>
 </body>
 </html>
-        
