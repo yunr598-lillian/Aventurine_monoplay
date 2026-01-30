@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=320, height=568, initial-scale=1.0, user-scalable=no">
+<title>Love Monopoly</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;500;700&display=swap');
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Noto Sans SC', sans-serif;
+    overflow: hidden;
+  }
+
+  #game-container {
+    width: 320px;
+    height: 568px;
+    background-color: #f9f9f9;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    border-radius: 15px;
+  }
+
+  /* Intro Screen */
+  #start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fce4ec 0%, #f5f5f5 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  h1 {
+    color: #bdbdbd;
+    font-size: 24px;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+  
+  h2 {
+    color: #ffb7b2;
+    font-size: 32px;
+    margin: 0 0 30px 0;
+    text-shadow: 2px 2px 0px #fff;
+  }
+
+  /* Name Input Modal */
+  #name-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 150;
+  }
+
+  .name-modal {
+    width: 240px;
+    background: #fff;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(255, 183, 178, 0.3);
+    text-align: center;
+    border: 2px solid #fce4ec;
+  }
+
+  .name-modal label {
+    display: block;
+    margin-bottom: 15px;
+    color: #ffb7b2;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .name-modal input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #fce4ec;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: 'Noto Sans SC', sans-serif;
+    outline: none;
+    color: #757575;
+  }
+
+  .name-modal input:focus {
+    border-color: #ffcdd2;
+  }
+
+  .btn {
+    padding: 12px 30px;
+    background-color: #ffcdd2;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 183, 178, 0.4);
+    transition: transform 0.2s;
+  }
+  .btn:active { transform: scale(0.95); }
+
+  /* Countdown */
+  #countdown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    font-size: 80px;
+    color: #ffb7b2;
+    font-weight: bold;
+    z-index: 90;
+    animation: pulse 1s infinite;
+  }
+
+  /* Game Board Area */
+  #game-board-area {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #fafafa;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    height: 60px;
+  }
+
+  .dice-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: #757575;
+    cursor: pointer;
+    border: 2px solid #eeeeee;
+  }
+
+  .turn-indicator {
+    font-size: 14px;
+    color: #9e9e9e;
+    font-weight: bold;
+  }
+
+  /* Grid Board */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 6px;
+    flex-grow: 1;
+    margin-top: 10px;
+    padding-bottom: 20px;
+  }
+
+  .cell {
+    background-color: #fff;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    color: #bdbdbd;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    text-align: center;
+    padding: 2px;
+    word-break: break-word;
+    border: 1px solid #f5f5f5;
+  }
+  
+  .cell.start { background-color: #eeeeee; color: #757575; font-weight: bold; }
+  .cell.end { background-color: #ffebee; color: #ff8a80; font-weight: bold; }
+  .cell.special { background-color: #f3e5f5; color: #ce93d8; }
+
+  /* Tokens */
+  .token {
+    font-size: 18px;
+    position: absolute;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  }
+  .token.user { transform: translate(-8px, -8px); }
+  .token.char { transform: translate(8px, 8px); }
+
+  /* Modal */
+  #modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    backdrop-filter: blur(2px);
+  }
+
+  .modal {
+    width: 260px;
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    animation: popIn 0.3s ease;
+    text-align: left;
+    border: 1px solid #fce4ec;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #f5f5f5;
+    padding-bottom: 10px;
+  }
+  
+  .avatar { font-size: 24px; margin-right: 10px; }
+  .speaker-name { font-weight: bold; font-size: 14px; color: #757575; }
+  
+  .modal-content {
+    font-size: 13px;
+    color: #616161;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+
+  .option-btn {
+    background: #f5f5f5;
+    border: 1px solid #eeeeee;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    color: #757575;
+    transition: background 0.2s;
+  }
+  .option-btn:hover { background: #fff9c4; color: #ffb74d; }
+
+  .close-btn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
+    background: #ffcdd2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  @keyframes pulse { 0% { opacity: 0.6; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.6; transform: scale(0.9); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="start-screen">
+    <h1>COUPLE</h1>
+    <h2>MONOPOLY</h2>
+    <div style="font-size: 40px; margin-bottom: 30px;">🐰 ❤️ 🦚</div>
+    <button class="btn" onclick="showNameModal()">Start Game</button>
+  </div>
+
+  <div id="name-modal-overlay">
+    <div class="name-modal">
+      <label>请输入你的名字</label>
+      <input type="text" id="player-name-input" placeholder="砂你99" maxlength="10">
+      <button class="btn" onclick="confirmName()">确定</button>
+    </div>
+  </div>
+
+  <div id="countdown">3</div>
+
+  <div id="game-board-area" style="opacity: 0;">
+    <div class="header">
+      <div class="turn-indicator" id="turn-text">User's Turn (🐰)</div>
+      <div class="dice-container" onclick="handleDiceClick()" id="dice-btn">🎲</div>
+    </div>
+    
+    <div id="grid"></div>
+  </div>
+
+  <div id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="avatar" id="m-avatar">🐰</span>
+        <span class="speaker-name" id="m-name">User</span>
+      </div>
+      <div class="modal-content" id="m-content"></div>
+      <div class="options" id="m-options"></div>
+      <button class="close-btn" id="m-close" style="display:none;" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Game State
+  const gameState = {
+    started: false,
+    playerName: "箬云", 
+    turn: 0, 
+    userPos: 0,
+    charPos: 0,
+    userPaused: false,
+    charPaused: false,
+    isMoving: false,
+    boardSize: 20
+  };
+
+  const questions = [
+    { 
+      q: "对我的第一印象是？", 
+      uOpts: [
+        { text: "傲慢的赌徒", reaction: "呵，傲慢只是有资本的自信。至少你记住了我，不是吗？" },
+        { text: "花哨的孔雀", reaction: "羽毛不漂亮怎么吸引你的注意？而且你知道吗，孔雀开屏可是求偶的意思" },
+        { text: "危险分子", reaction: "既然知道危险，那你还离我这么近，你就是爱上我了。口是心非。" }
+      ],
+      cResp: "一只迷路的小白兔。" 
+    },
+    { 
+      q: "用一个小动物形容对方？", 
+      uOpts: [
+        { text: "狡猾的狐狸", reaction: "彼此彼此，能看穿狐狸的，通常也不是什么单纯的小绵羊。" },
+        { text: "开屏的孔雀", reaction: "如果是为了你，我不仅可以开屏，我还可以可以为你起舞。" },
+        { text: "粘人的猫", reaction: "猫？哈，如果我是猫，那你就就是猫薄荷。" }
+      ],
+      cResp: "你是某种...带刺的仓鼠？" 
+    },
+    { 
+      q: "最喜欢的约会地点？", 
+      uOpts: [
+        { text: "图书馆", reaction: "那里太安静了，又不能打扰到其他人，多无聊。估计只有和拉帝奥一起的时候会觉得有趣吧，该死的教授。" },
+        { text: "家里", reaction: "完美的答案。没有外人打扰，我们可以尽情享受‘二人世界’。" },
+        { text: "安静的咖啡馆", reaction: "咖啡馆啊，当然了，我喂你吃蛋糕，我们共同喝一杯饮料，多完美。" }
+      ],
+      cResp: "当然是赌场。那种赌博的感觉我最迷恋了。" 
+    },
+    { 
+      q: "如果有100亿信用点会做什么？", 
+      uOpts: [
+        { text: "还清债务", reaction: "无债一身轻？那样我就没有理由赖着你了，这可不行。" },
+        { text: "存起来", reaction: "真是个勤俭持家的好孩子，不过...偶尔也该学会挥霍快乐。" },
+        { text: "给真理医生买书", reaction: "啧，这时候提那个石膏头？我 吃 醋 了" }
+      ],
+      cResp: "拿去赌了。赢了就给你买周边，输了...就把我赔给你怎么样？" 
+    },
+    { 
+      q: "对方最让你讨厌的一点？", 
+      uOpts: [
+        { text: "太轻浮", reaction: "轻浮只是表象，我的真心可是你的。" },
+        { text: "总想控制我", reaction: "控制？不不不，那叫‘保护’。" },
+        { text: "不论场合的调情", reaction: "脸红了吗？很可爱，不过别人会看见。没事，我会把你挡着，只给我一个人看。" }
+      ],
+      cResp: "你的眼神总是追着那个石膏头跑。这让我...非常嫉妒。" 
+    },
+    { 
+      q: "谁在关系中掌握主动权？", 
+      uOpts: [
+        { text: "真理医生(如果是他的话)", reaction: "别让我在这种话题里听到第三个人的名字，我不喜欢。" },
+        { text: "我！！！", reaction: "你？也行啊，毕竟有时候我也想体验一下你在上面的感觉。你会吗？" },
+        { text: "肯定不是你", reaction: "哦？这么有自信？那今晚不妨来验证一下，到底谁说了算。" }
+      ],
+      cResp: "表面上是你，毕竟我可是你的'奴隶'。但实际上...你知道的。" 
+    },
+    { 
+      q: "最想一起做的事？", 
+      uOpts: [
+        { text: "完成工作", reaction: "工作狂...不过如果原因是为了早点完成工作和我去出外勤我也是不介意的。" },
+        { text: "离职", reaction: "私奔吗？你可以离职，但我不行，我可是会被公司威胁的。" },
+        { text: "安静地待着", reaction: "好啊，我们一起。" }
+      ],
+      cResp: "在高塔顶端看一场流星雨，我们两个。" 
+    },
+    { 
+      q: "对方最性感的瞬间？", 
+      uOpts: [
+        { text: "闭嘴的时候", reaction: "嘘...我可以闭嘴，但我的手，我的眼，我的身体可不会停下。" },
+        { text: "认真工作的时候", reaction: "看来我认真布局的样子迷住你了？那我就不得不承认我很帅气了。" },
+        { text: "没有这种时候", reaction: "嘴硬。明明上次我靠近你的时候，你脸红了。" }
+      ],
+      cResp: "当你冷着脸拒绝我，却又因为我的靠近而红了耳根的时候。" 
+    },
+    { 
+      q: "如果世界末日来了？", 
+      uOpts: [
+        { text: "找个地方躲起来", reaction: "我们一起躲起去安全屋，我请你。" },
+        { text: "给拉帝奥教授发消息", reaction: "又是他？如果是末日，我希望你最后一眼看到的人是我。" },
+        { text: "加班", reaction: "都要毁灭了还在为公司卖命？真是个傻瓜..." }
+      ],
+      cResp: "我会找到你，然后我们亲吻，直至毁灭。" 
+    },
+    { 
+      q: "给对方的一个忠告？", 
+      uOpts: [
+        { text: "离我远点", reaction: "这可难办了，万物皆有引力这个定律告诉我，我会被你吸引。（其实就是在胡说吧啊喂！）" },
+        { text: "少在那自说自话", reaction: "好，那我不说了，直接做，怎么样？" },
+        { text: "注意安全", reaction: "你在担心我？甜心你果然爱我" }
+      ],
+      cResp: "别太相信我，但也别太推开我。" 
+    },
+    { 
+      q: "最喜欢的食物？", 
+      uOpts: [
+        { text: "虽然但是，我不挑食", reaction: "好养活的小家伙。" },
+        { text: "简单的便当", reaction: "简单？没问题。" },
+        { text: "甜点", reaction: "甜点吗？嘴对嘴吃好不好" }
+      ],
+      cResp: "昂贵的酒，和便宜的命。开玩笑的...只要是你给的毒药我也吃。" 
+    },
+    { 
+      q: "对'朋友'的定义？（真的只是朋友吗！）", 
+      uOpts: [
+        { text: "互不干涉", reaction: "互不干涉太冷漠了，我更喜欢...互相纠缠。" },
+        { text: "有利用价值", reaction: "那你利用我吧，尽情地利用。" },
+        { text: "真诚", reaction: "真诚可是赌桌上的大忌。" }
+      ],
+      cResp: "像我们这样。互相利用，互相博弈，又...互相吸引。" 
+    },
+    { 
+      q: "现在最想说的一句话？", 
+      uOpts: [
+        { text: "我要下班", reaction: "下班后去哪？陪我？" },
+        { text: "真理医生在哪", reaction: "我也在找他，告诉他，离你远点。" },
+        { text: "好累", reaction: "过来，到我怀里，暖暖的，安心的。" }
+      ],
+      cResp: "看着我，{name}。只看着我。" 
+    },
+    { 
+      q: "如果我哭了你会怎么办？", 
+      uOpts: [
+        { text: "我会自己擦", reaction: "喂喂喂不要自己承担啊，有了我就应该投靠我。" },
+        { text: "不关你事", reaction: "怎么不关我事？你难过的时候，我也会难过的。" },
+        { text: "你会嘲笑我吧", reaction: "嘲笑？好吧有些时候我确实会。" }
+      ],
+      cResp: "我会吻去你的眼泪。" 
+    },
+    { 
+      q: "最难忘的一次经历？", 
+      uOpts: [
+        { text: "入职那天", reaction: "那天我也在。看到你第一眼，我就知道我们是命中注定的【朋友】" },
+        { text: "第一次见到真理医生", reaction: "看来我得努力创造一些回忆，覆盖掉你脑子里关于他的画面。" },
+        { text: "被你纠缠的时候", reaction: "那叫‘追求’。而且看样子，你并没有真的很讨厌这种纠缠，对吧？" }
+      ],
+      cResp: "每一次你试图逃跑，最后却又不得不回到我身边的时候。" 
+    },
+    { 
+      q: "对方像什么颜色？", 
+      uOpts: [
+        { text: "轻浮的金", reaction: "金色是最尊贵的颜色，就像你。" },
+        { text: "危险的紫", reaction: "紫色代表神秘和诱惑，看来我也成功诱惑到你了？" },
+        { text: "虚伪的彩", reaction: "虚伪吗？甜心这么想我我可是会伤心的" }
+      ],
+      cResp: "你是冷淡的颜色，但我偏要给你染上属于我的金。" 
+    },
+    { 
+      q: "现在最想对另一方做什么", 
+      uOpts: [
+        { text: "捏捏他的脸", reaction: "（把脸凑过去）嗯？甜心..." },
+        { text: "摸摸他的奶窗", reaction: "甜心你这样子不会撑坏衣服吗？这间衣服很贵的，你弄坏了要陪我。当然，陪≠赔" },
+        { text: "亲他一口", reaction: "唔，怎么这么主动了？是不是干了什么亏心事？哈哈逗你的，多亲几口。" }
+      ],
+      cResp: "肯定是干一些弄脏床单的事啦～" 
+    },
+    { 
+      q: "在婚后会习惯一直带着戒指吗", 
+      uOpts: [
+        { text: "肯定会喔！不习惯的话也会试着习惯的", reaction: "哈哈，甜心...谢谢你习惯我" },
+        { text: "（若有所思）都可以吧..要是太麻烦就穿在项链上当项链，尽管可能上面的钻石可能会丢啊哈哈..", reaction: "丢了？那可真是不  小  心。" },
+        { text: "不要ヽ(≧Д≦)ノ平时抹护手霜什么的好麻烦！况且钻石太大了真的很容易弄丢！", reaction: "丢了就再买一个..又不是把我丢了" }
+      ],
+      cResp: "（下意识的摩挲了一下戒指）当然不会～毕竟这么重要的东西当然要时时刻刻带着才好＾＾（说罢看了一眼）" 
+    },
+    { 
+      q: "如果有一天我失忆了怎么办？", 
+      uOpts: [
+        { text: "我带你去看医生，一定把你治好（科学型回答）", reaction: "治好？要是没治好怎么办？" },
+        { text: "那我就一直陪着你，让你想起我（直白型回答）", reaction: "甜心真是长情，不许找其他男人哦。" },
+        { text: "不要这么说，拍三下桌子说呸呸呸（哲学型回答）", reaction: "喂喂喂，逃避问题可不是好习惯" }
+      ],
+      cResp: "那我就从头再爱你一次" 
+    },
+    { 
+      q: "真心话：喜欢我吗？", 
+      uOpts: [
+        { text: "不喜欢", reaction: "撒谎。你的眼睛出卖了你。" },
+        { text: "讨厌", reaction: "讨厌我？没关系，对抗路我也喜欢，毕竟「宿敌就是妻子」嘛" },
+        { text: "不想回答", reaction: "沉默就代表默认咯，你果然爱上了我。" }
+      ],
+      cResp: "当然喜欢你了。我爱死你这副口是心非的样子了。现在的答案不重要，因为我不接受拒绝。" 
+    }
+  ];
+
+  const boardLayout = [
+    { type: 'start', text: 'START' }, { type: 'question', id: 0 }, { type: 'move', val: 1, text: '前进1格' }, { type: 'question', id: 1 }, { type: 'question', id: 2 },
+    { type: 'special', val: 'pause', text: '暂停一轮' }, { type: 'question', id: 3 }, { type: 'move', val: -1, text: '后退1格' }, { type: 'question', id: 4 }, { type: 'question', id: 5 },
+    { type: 'question', id: 6 }, { type: 'question', id: 7 }, { type: 'move', val: 1, text: '前进1格' }, { type: 'question', id: 8 }, { type: 'special', val: 'pause', text: '暂停一轮' },
+    { type: 'question', id: 9 }, { type: 'question', id: 10 }, { type: 'question', id: 11 }, { type: 'question', id: 12 }, { type: 'end', text: 'END' }
+  ];
+
+  function showNameModal() {
+    document.getElementById('name-modal-overlay').style.display = 'flex';
+  }
+
+  function confirmName() {
+    const val = document.getElementById('player-name-input').value;
+    if(val.trim() !== "") {
+      gameState.playerName = val.trim();
+    }
+    document.getElementById('name-modal-overlay').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    startCountdown();
+  }
+
+  function startCountdown() {
+    const cnt = document.getElementById('countdown');
+    cnt.style.display = 'flex';
+    let n = 3;
+    updateTurnIndicator();
+    const timer = setInterval(() => {
+      n--;
+      if (n > 0) cnt.innerText = n;
+      else if (n === 0) cnt.innerText = "GO!";
+      else {
+        clearInterval(timer);
+        cnt.style.display = 'none';
+        document.getElementById('game-board-area').style.opacity = 1;
+        gameState.started = true;
+      }
+    }, 800);
+    initBoard();
+  }
+
+  function initBoard() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    const visualOrder = [0, 1, 2, 3, 7, 6, 5, 4, 8, 9, 10, 11, 15, 14, 13, 12, 16, 17, 18, 19];
+    visualOrder.forEach((logicIndex) => {
+      const data = boardLayout[logicIndex] || { type: 'question', id: logicIndex % questions.length };
+      const div = document.createElement('div');
+      div.id = `cell-${logicIndex}`;
+      div.className = 'cell';
+      if (data.type === 'start') div.classList.add('start');
+      if (data.type === 'end') div.classList.add('end');
+      if (data.type === 'move' || data.type === 'special') div.classList.add('special');
+      div.innerText = data.type === 'start' ? 'START' : data.type === 'end' ? 'END' : data.text || `Q${data.id + 1}`;
+      grid.appendChild(div);
+    });
+    const pToken = document.createElement('div'); pToken.className = 'token user'; pToken.innerText = '🐰'; pToken.id = 'token-user';
+    const cToken = document.createElement('div'); cToken.className = 'token char'; cToken.innerText = '🦚'; cToken.id = 'token-char';
+    const area = document.getElementById('game-board-area'); area.appendChild(pToken); area.appendChild(cToken);
+    updateTokenPos(0, 'user'); updateTokenPos(0, 'char');
+  }
+
+  function updateTokenPos(index, who) {
+    if (index > 19) index = 19;
+    const coords = getCoordinates(index);
+    const el = document.getElementById(`token-${who}`);
+    el.style.top = (coords.top + 15) + 'px'; el.style.left = (coords.left + 25) + 'px';
+  }
+
+  function getCoordinates(index) {
+    const row = Math.floor(index / 4);
+    let col = index % 4;
+    if (row % 2 === 1) col = 3 - col;
+    const cell = document.getElementById(`cell-${index}`);
+    return cell ? { top: cell.offsetTop, left: cell.offsetLeft } : { top: 0, left: 0 };
+  }
+
+  function handleDiceClick() {
+    if (!gameState.started || gameState.isMoving) return;
+    if (gameState.turn === 0 && gameState.userPaused) {
+      alert(`${gameState.playerName}本轮暂停！`);
+      gameState.userPaused = false; gameState.turn = 1; updateTurnIndicator(); return;
+    }
+    roll(gameState.turn === 0 ? 'user' : 'char');
+  }
+
+  function roll(who) {
+    gameState.isMoving = true;
+    const dice = document.getElementById('dice-btn');
+    let rollTimes = 0;
+    const rollInterval = setInterval(() => {
+      const r = Math.floor(Math.random() * 6) + 1;
+      dice.innerText = ['⚀','⚁','⚂','⚃','⚄','⚅'][r-1];
+      if (++rollTimes > 10) {
+        clearInterval(rollInterval);
+        moveTokenStep(who, Math.floor(Math.random() * 6) + 1);
+      }
+    }, 50);
+  }
+
+  function moveTokenStep(who, steps) {
+    let current = who === 'user' ? gameState.userPos : gameState.charPos;
+    let target = Math.min(current + steps, 19);
+    const moveTimer = setInterval(() => {
+      if (current < target) {
+        current++; updateTokenPos(current, who);
+        if (who === 'user') gameState.userPos = current; else gameState.charPos = current;
+      } else {
+        clearInterval(moveTimer); setTimeout(() => handleLand(who, target), 300);
+      }
+    }, 400); 
+  }
+
+  function handleLand(who, index) {
+    const tile = boardLayout[index];
+    if (tile.type === 'end') { showEndPopup(who); return; }
+    if (tile.type === 'move') {
+      const newIdx = index + tile.val;
+      updateTokenPos(newIdx, who);
+      if (who === 'user') gameState.userPos = newIdx; else gameState.charPos = newIdx;
+      showSimplePopup(who, tile.text, () => endTurn());
+    } else if (tile.type === 'special' && tile.val === 'pause') {
+      if (who === 'user') gameState.userPaused = true; else gameState.charPaused = true;
+      showSimplePopup(who, "哎呀，暂停一轮！", () => endTurn());
+    } else {
+      showQuestionPopup(who, tile.id !== undefined ? tile.id : Math.floor(Math.random() * questions.length));
+    }
+  }
+
+  function showQuestionPopup(who, qId) {
+    const qData = questions[qId % questions.length];
+    const modal = document.getElementById('modal-overlay');
+    const mAvatar = document.getElementById('m-avatar');
+    const mName = document.getElementById('m-name');
+    const mContent = document.getElementById('m-content');
+    const mOptions = document.getElementById('m-options');
+    const mClose = document.getElementById('m-close');
+    modal.style.display = 'flex'; mOptions.innerHTML = ''; mClose.style.display = 'none';
+
+    if (who === 'user') {
+      mAvatar.innerText = '❓'; mName.innerText = '情侣提问'; mContent.innerText = `Q: ${qData.q}`;
+      qData.uOpts.forEach(opt => {
+        const btn = document.createElement('div'); btn.className = 'option-btn'; btn.innerText = opt.text;
+        btn.onclick = () => showInteraction(who, qData, opt); mOptions.appendChild(btn);
+      });
+    } else {
+      mAvatar.innerText = '🦚'; mName.innerText = '砂金';
+      mContent.innerText = `(停在了问题格)\n\n题目: "${qData.q}"\n\n砂金: "${qData.cResp.replace("{name}", gameState.playerName)}"`;
+      mClose.style.display = 'block'; mClose.onclick = () => { closeModal(); endTurn(); };
+    }
+  }
+
+  function showInteraction(who, qData, opt) {
+    const mContent = document.getElementById('m-content');
+    const mOptions = document.getElementById('m-options');
+    const mClose = document.getElementById('m-close');
+    mOptions.innerHTML = ''; mClose.style.display = 'block';
+    mContent.innerText = `🐰 ${gameState.playerName}: "${opt.text}"\n\n🦚 砂金: "${opt.reaction}"`;
+    mClose.onclick = () => { closeModal(); endTurn(); };
+  }
+
+  function showSimplePopup(who, text, cb) {
+    const modal = document.getElementById('modal-overlay');
+    const mContent = document.getElementById('m-content');
+    const mClose = document.getElementById('m-close');
+    modal.style.display = 'flex'; mContent.innerText = text; mClose.style.display = 'block';
+    mClose.onclick = () => { closeModal(); if(cb) cb(); };
+  }
+
+  function showEndPopup(winner) {
+    const modal = document.getElementById('modal-overlay');
+    const mContent = document.getElementById('m-content');
+    const mClose = document.getElementById('m-close');
+    modal.style.display = 'flex'; mClose.style.display = 'block'; mClose.innerText = "重新开始";
+    mContent.innerText = winner === 'user' ? `🎉 ${gameState.playerName} 赢了！\n\n🦚 砂金: "愿赌服输，你想对我做什么都可以..."` : `🎉 砂金 赢了！\n\n🦚 砂金: "我赢了，按照赌约...你今晚的时间归我了。"`;
+    mClose.onclick = () => location.reload();
+  }
+
+  function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+  function endTurn() {
+    gameState.isMoving = false; gameState.turn = 1 - gameState.turn; updateTurnIndicator();
+    if (gameState.turn === 1) {
+      if (gameState.charPaused) { 
+        setTimeout(() => { alert("砂金暂停！"); gameState.charPaused = false; endTurn(); }, 1000); 
+      } else { 
+        setTimeout(() => roll('char'), 1500); 
+      }
+    }
+  }
+
+  function updateTurnIndicator() {
+    const el = document.getElementById('turn-text');
+    el.innerText = gameState.turn === 0 ? `${gameState.playerName}'s Turn (🐰)` : "Aventurine's Turn (🦚)";
+    el.style.color = gameState.turn === 0 ? "#ff8a80" : "#ce93d8";
+  }
+</script>
+</body>
+</html>
+        
