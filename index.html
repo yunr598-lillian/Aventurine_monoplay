@@ -111,7 +111,7 @@
     align-items: center; font-size: 10px; color: #bdbdbd; position: relative;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center; border: 1px solid #f5f5f5;
   }
-  
+
   .cell.start { background-color: #eeeeee; color: #757575; }
   .cell.end { background-color: #ffebee; color: #ff8a80; }
   .cell.special { background-color: #f3e5f5; color: #ce93d8; }
@@ -134,6 +134,7 @@
   .modal {
     width: 260px; background: #fff; border-radius: 15px; padding: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: left;
+    max-height: 80%; overflow-y: auto; /* Allow scrolling for credits if needed */
   }
 
   .modal-header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; padding-bottom: 10px; }
@@ -147,6 +148,18 @@
   }
   .option-btn:hover { background: #fff9c4; }
   .close-btn { width: 100%; padding: 10px; background: #ffcdd2; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+
+  /* Credits Specific Style */
+  .credit-item {
+      background: #fff0f5; 
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #888;
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 6px;
+      border: 1px dashed #ffcdd2;
+  }
 
 </style>
 </head>
@@ -376,6 +389,33 @@
       ],
       cResp: "那我就从头再爱你一次" 
     },
+ { 
+      q: "觉得自己会爱人嘛", 
+      uOpts: [
+        { text: "我会爱，痴迷的爱，但是怕你害怕", reaction: "不会的甜心" },
+        { text: "我敏感多疑不安，害怕你离我而且", reaction: "那我就一般般的肯定加倍爱你" },
+        { text: "我怕你讨厌这样的爱", reaction: "不会的，我会享受甜心的爱" }
+      ],
+      cResp: "好好爱我的同时也要爱你自己啊" 
+    },
+ { 
+      q: "最喜欢什么贴贴方式？", 
+      uOpts: [
+        { text: "面对面拥抱吧，感觉很有安全感呢", reaction: "面对面？我也很喜欢，让我感觉真正拥有了你" },
+        { text: "也许是牵手？因为很幸福^", reaction: "平淡的幸福，不过你喜欢的话，也不错？" },
+        { text: "不喜欢贴贴😞", reaction: "不喜欢吗？🥺可我很爱和甜心贴贴呢" }
+      ],
+      cResp: "也许是背后抱？会让我感觉甜心完全属于我" 
+    },
+ { 
+      q: "你愿意把自己的感情当做筹码，来作为作为这段关系的赌注吗？赌对方肯定会爱上你。", 
+      uOpts: [
+        { text: "会，我会孤注一掷，但对方如果不跟注，我会感觉有点无聊的", reaction: "这个时候就需要一个来主动下注的赌徒不是吗？无论你是否跟注，我都会始终如一……我相信你会接受我的" },
+        { text: "不会，感情这种事情说不准，我不想自己先去投入这段感情", reaction: "看下注对象是否是你，是你我会付出我的全部筹码……你能接下吗？亲爱的" },
+        { text: "当然呀，我对每一位喜欢或者爱的人都是这样，况且也不能说只能下注一位吧？", reaction: "……真是有意思呢……甜心，熟读规则也是赌徒基本的操守，但光是看破规则漏洞也不能说明是一个老手。我记住你的回答了……我会让你跟注更多，知道你无心下注其他东西，你只能看着我，我才是你的对手与搭档……" }
+      ],
+      cResp: "我当然会孤注一掷……赢下所有，或者一无所有不是吗？亲爱的" 
+    },
     { 
       q: "真心话：喜欢我吗？", 
       uOpts: [
@@ -504,7 +544,7 @@
 
   function handleLand(who, index) {
     const tile = boardLayout[index];
-    
+
     if (tile.type === 'end') { showEndPopup(who); return; }
 
     if (tile.type === 'move') {
@@ -536,7 +576,7 @@
     const mContent = document.getElementById('m-content');
     const mOptions = document.getElementById('m-options');
     const mClose = document.getElementById('m-close');
-    
+
     modal.style.display = 'flex'; mOptions.innerHTML = ''; mClose.style.display = 'none';
 
     if (who === 'user') {
@@ -575,14 +615,66 @@
     mClose.onclick = () => { closeModal(); if(cb) cb(); };
   }
 
+  // --- 改动部分：修改了游戏结束弹窗逻辑和新增了Credit展示函数 ---
+
   function showEndPopup(winner) {
     const modal = document.getElementById('modal-overlay');
     const mContent = document.getElementById('m-content');
     const mClose = document.getElementById('m-close');
-    modal.style.display = 'flex'; mClose.style.display = 'block'; mClose.innerText = "重新开始";
+    const mOptions = document.getElementById('m-options');
+    const mAvatar = document.getElementById('m-avatar');
+    const mName = document.getElementById('m-name');
+
+    modal.style.display = 'flex'; 
+    mOptions.innerHTML = ''; // 清空选项
+    mClose.style.display = 'block'; 
+    mAvatar.innerText = winner === 'user' ? '🐰' : '🦚';
+    mName.innerText = "Game Over";
+    
     mContent.innerText = winner === 'user' ? `🎉 ${gameState.playerName} 赢了！\n\n🦚 砂金: "愿赌服输，你想对我做什么都可以…"` : `🎉 砂金 赢了！\n\n🦚 砂金: "今晚我来主导？"`;
+    
+    // 按钮改为查看 Credits
+    mClose.innerText = "查看制作人员";
+    mClose.onclick = () => showCredits();
+  }
+
+  function showCredits() {
+    const mAvatar = document.getElementById('m-avatar');
+    const mName = document.getElementById('m-name');
+    const mContent = document.getElementById('m-content');
+    const mClose = document.getElementById('m-close');
+    const mOptions = document.getElementById('m-options');
+
+    mAvatar.innerText = '✨';
+    mName.innerText = 'Credits';
+    
+    mOptions.innerHTML = ''; // 清空按钮
+    mContent.innerHTML = ''; // 使用HTML渲染列表
+
+    const creditNames = [
+        "嘉桐（群文件）",
+        "羽缪",
+        "白鹿",
+        "杰恩革",
+        "晴雪炎",
+        "博恒",
+        "lillian"
+    ];
+
+    // 创建带样式的名单列表
+    creditNames.forEach(name => {
+        const item = document.createElement('div');
+        item.className = 'credit-item';
+        item.innerText = name;
+        mContent.appendChild(item);
+    });
+
+    // 最后的重启按钮
+    mClose.innerText = "重新开始";
     mClose.onclick = () => location.reload();
   }
+
+  // -----------------------------------------------------------
 
   function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
